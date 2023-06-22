@@ -1,6 +1,6 @@
-import {StyleSheet, View, ScrollView,Image} from 'react-native';
+import {StyleSheet, View, ScrollView, Image} from 'react-native';
 
-import React, {useContext, useRef, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {AuthContext} from '../navigation/AuthProvider';
 
 import {TouchableOpacity} from 'react-native-gesture-handler';
@@ -18,7 +18,8 @@ import {
   Avatar,
 } from '@rneui/themed';
 import Navoptions from '../components/NavOptions';
-import { windowWidth } from '../utils/dimensions';
+import {windowWidth} from '../utils/dimensions';
+import { PermissionsAndroid } from 'react-native';
 
 const Homescreen = ({navigation}) => {
   //const navigation =useNavigation();
@@ -27,7 +28,32 @@ const Homescreen = ({navigation}) => {
 
   const bottomSheetRef = useRef(null);
   const [isOpen, setIsOpen] = useState(true);
+ 
+  useEffect(() => {
+    checkPermissions();
+  }, []);
 
+  const checkPermissions = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Allow Location Access',
+          message:
+            'App needs access to your device location in order to show nearby places.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      } else {
+        console.log('Location permission denied');
+      }
+    } else {
+      // If we're on IOS, no need to check for location permission
+    }
+  };
   return (
     <SafeAreaProvider>
       <HeaderRNE
@@ -36,8 +62,8 @@ const Homescreen = ({navigation}) => {
             <Avatar
               size={32}
               rounded
-              icon={{ name: 'user', type: 'font-awesome' ,color:'black' }}
-              containerStyle={{ backgroundColor: '#ffffff' }}
+              icon={{name: 'user', type: 'font-awesome', color: 'black'}}
+              containerStyle={{backgroundColor: '#ffffff'}}
             />
           </TouchableOpacity>
         }
@@ -63,15 +89,13 @@ const Homescreen = ({navigation}) => {
           <View style={{paddingTop: 20, paddingBottom: 10}}>
             <Tile
               imageSrc={{
-                uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Half_Dome_from_Glacier_Point%2C_Yosemite_NP_-_Diliff.jpg/320px-Half_Dome_from_Glacier_Point%2C_Yosemite_NP_-_Diliff.jpg'
+                uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Half_Dome_from_Glacier_Point%2C_Yosemite_NP_-_Diliff.jpg/320px-Half_Dome_from_Glacier_Point%2C_Yosemite_NP_-_Diliff.jpg',
               }}
               title="This is Full Campus Navigation using images "
               titleStyle={{fontSize: 20, textAlign: 'center', paddingBottom: 5}}
               featured
               activeOpacity={1}
-              width={windowWidth-15}>
-           
-            </Tile>
+              width={windowWidth - 15}></Tile>
           </View>
           <View>
             <Card>
@@ -100,6 +124,7 @@ const Homescreen = ({navigation}) => {
               />
             </Card>
           </View>
+          
         </ScrollView>
       </View>
     </SafeAreaProvider>

@@ -9,6 +9,7 @@ import RouteScreen from '../screens/RouteScreen';
 import BottomSheet from '../screens/BottomSheet';
 import EventsScreen from '../screens/EventsScreen';
 import QRScreen from '../screens/QRScreen';
+import DetailsScreen from '../screens/DetailsScreen';
 
 
 const Stack = createStackNavigator();
@@ -45,6 +46,11 @@ const AppStack = () => {
        <Stack.Screen
         name="QR"
         component={QRScreen}
+        //options={{header: () => null}}
+      />
+      <Stack.Screen
+        name="Details"
+        component={DetailsScreen}
         //options={{header: () => null}}
       />
 

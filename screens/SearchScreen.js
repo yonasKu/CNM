@@ -17,6 +17,7 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {Icon} from '@rneui/themed';
 
 const API_ENDPOINT = `https://randomuser.me/api/?results=30`;
+const api =`https://v1.nocodeapi.com/yonasku/fbsdk/TAXCTHLcOolNMAyJ/firestore/allDocuments?collectionName=buildingCollection`
 
 const SearchScreen = () => {
   const [isLoading, setIsloading] = useState('false');

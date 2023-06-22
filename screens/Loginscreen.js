@@ -1,18 +1,30 @@
-import { StyleSheet, Text, View,Image } from 'react-native'
+import { StyleSheet, Text, View,Image, ActivityIndicator } from 'react-native'
 import React, { useContext, useState } from 'react'
 import FormInput from '../components/FormInput'
 import FormButton from '../components/FormButton';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
-import AntDesign from "react-native-vector-icons/AntDesign"
 import { AuthContext } from '../navigation/AuthProvider';
 
 const Loginscreen = ({navigation}) => {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
+  const [loading, setLoading] = useState(false); 
 
-  const {Login} = useContext(AuthContext) 
-  
+  const { Login } = useContext(AuthContext);
+
+  const onLoginPress = async () => {
+    setLoading(true); 
+
+    try {
+      await Login(email, password); 
+    } catch (error) {
+      console.log(error); // handle error appropriately
+    } finally {
+      setLoading(false); 
+    }
+  };
+
   return (
     <View style={styles.container}>
        <Image
@@ -37,9 +49,11 @@ const Loginscreen = ({navigation}) => {
         iconType="lock"
         secureTextEntry={true}
       />
+       {loading && <ActivityIndicator size="large" color="#0000ff" />}
+
       <FormButton
         buttonTitle="Sign In"
-        onPress={() => Login(email, password)}
+        onPress={onLoginPress} 
       />
       <TouchableOpacity
       style={styles.forgotButton}

@@ -12,8 +12,7 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {Avatar, Icon, ListItem} from '@rneui/themed';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 
-import {useSelector, useDispatch} from 'react-redux';
-// Import the Redux actions and selectors
+
 
 import {useNavigation} from '@react-navigation/native';
 
@@ -91,7 +90,7 @@ const EventsScreen = () => {
   // const [UserLocation, setUserLocation] = useState([]);
 
   const navigation = useNavigation();
-
+  const [isLoading, setIsLoading] = useState(false);
   const [userLocation, setUserLocation] = useState([39.289615, 8.5641967]);
 
   useEffect(() => {
@@ -111,19 +110,29 @@ const EventsScreen = () => {
   console.log(userLocation);
 
   const handleRoutePress = async coord => {
+    setIsLoading(true);
+
     if (userLocation.length === 0) {
       alert(
-        'Could not fetch your location. Please turn your location on  or try again.',
+        'Could not fetch your location. Please turn your location on or try again.',
       );
+      setIsLoading(false);
       return;
     }
-    // Call fetchRoute with the origin and destination variables
-    const route = await fetchRoute(userLocation, coord);
-    navigation.navigate('Route', {route});
-    console.log(userLocation, coord);
-    //console.log(route);
+
+    try {
+      // Call fetchRoute with the origin and destination variables
+      const route = await fetchRoute(userLocation, coord);
+      navigation.navigate('Route', {route});
+      console.log(userLocation, coord);
+      //console.log(route);
+    } catch (error) {
+      console.error(error);
+      alert('An error occurred while fetching the route. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
-  // Use the useDispatch hook to get the Redux dispatch function
 
   return (
     <SafeAreaProvider>
@@ -151,12 +160,18 @@ const EventsScreen = () => {
                 setExpanded1(!expanded1);
                 setExpanded2(false);
               }}>
+                {isLoading && <ActivityIndicator />}
               <View style={styles.SpeRouteholder}>
                 {/* Display data from first data array */}
                 {specificRoutesData.map(item => (
                   <View key={item.id}>
                     <ListItem>
-                    <Icon type="material-community" name="map-marker-path" size={22} color="#517fa4" />
+                      <Icon
+                        type="material-community"
+                        name="map-marker-path"
+                        size={22}
+                        color="#517fa4"
+                      />
 
                       <TouchableOpacity
                         style={styles.touchcontain}
@@ -183,6 +198,7 @@ const EventsScreen = () => {
                   </View>
                 ))}
               </View>
+              
             </ListItem.Accordion>
 
             <View style={styles.imageContainer}>
@@ -219,7 +235,9 @@ const EventsScreen = () => {
                   />
                 </View>
               ))}
+              {isLoading && <ActivityIndicator />}
             </ListItem.Accordion>
+            
           </View>
         </View>
       </ScrollView>

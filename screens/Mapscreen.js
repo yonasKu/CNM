@@ -72,7 +72,7 @@ const Mapscreen = () => {
     centerCoordinate: [39.29067144628581, 8.562990740516645],
     //pitch: 0,
     //heading: 0,
-    zoomLevel: 15,
+    zoomLevel: 14,
   };
   const [zoomLevel, setZoomLevel] = useState(defaultCamera.zoomLevel);
   const [location, setLocation] = useState(false);
@@ -134,7 +134,7 @@ const Mapscreen = () => {
     return () => clearTimeout(timeout);
   }, []);
   
-  console.log('UserLocation:', userLocation);
+  //console.log('UserLocation:', userLocation);
   
   /////////////////////////////////////////////////
 

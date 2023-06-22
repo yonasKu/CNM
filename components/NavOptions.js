@@ -23,7 +23,7 @@ const data = [
   {
     id: '3',
     title: 'details',
-    screen: 'AboutScreen',
+    screen: 'Details',
   },
 ];
 const Navoptions = () => {

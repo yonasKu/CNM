@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Text,
+  ActivityIndicator,
 } from 'react-native';
 import Entypo from 'react-native-vector-icons/Entypo';
 import MapboxGL, {
@@ -48,6 +49,10 @@ const RouteScreen = () => {
   const userTrackingMode =
     MapboxGL.UserTrackingModes.FollowWithCourseAndHeading;
   //const [route, setRoute] = useState(null);
+
+
+  const [isLoading, setIsLoading] = useState(true);
+
 
   const bottomSheetRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -109,6 +114,7 @@ const RouteScreen = () => {
       const {latitude, longitude, heading} = await getCurrentLocation();
       console.log('get live location after 4 second', heading);
       setUserLocation([longitude, latitude]);
+      console.log('UserLocation:', UserLocation);
     }
   };
 
@@ -121,7 +127,7 @@ const RouteScreen = () => {
     return () => clearTimeout(timeout);
   }, []);
 
-  console.log('UserLocation:', UserLocation);
+  
   ///////////////////////////////////////////////////////////////////////
   useEffect(() => {
     if (UserLocation) {
@@ -129,6 +135,32 @@ const RouteScreen = () => {
     }
   }, [UserLocation]);
   ///////////////////////////
+
+///////////////////////////////
+
+const [timeElapsed, setTimeElapsed] = useState(0);
+
+useEffect(() => {
+  const intervalId = setInterval(() => {
+    setTimeElapsed(timeElapsed => timeElapsed + 1);
+  }, 1000);
+
+  return () => clearInterval(intervalId);
+}, []);
+
+useEffect(() => {
+  if (UserLocation !== null) {
+    setIsLoading(false);
+  } else if (timeElapsed >= 45) {
+    setIsLoading(false);
+    alert('Could not fetch your location. Please turn your location on or try again.');
+  }
+}, [UserLocation, timeElapsed]);
+
+
+
+//////////////////////////////
+
   const [centerpinCoordinate, setCenterpinCoordinate] = useState([
     39.290794776187056, 8.562069822199803,
   ]);
@@ -251,10 +283,11 @@ const RouteScreen = () => {
       setCenterpinCoordinate([39.290794776187056, 8.562069822199803]);
     }
   }, [UserLocation]);
-  ///////////////////////////////
+  //////////////////////////////////
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
+      {isLoading && <ActivityIndicator />}
         <MapboxGL.MapView
           style={styles.mapbox}
           styleURL={

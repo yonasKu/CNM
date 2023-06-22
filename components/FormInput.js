@@ -8,7 +8,7 @@ const FormInput = ({labelValue, placeholderText, iconType, ...rest}) => {
   return (
     <View style={styles.inputContainer}>
       <View style={styles.iconStyle}>
-        <Icon type="font-awesome" name={iconType} size={18} color="#666" />
+        <Icon type="font-awesome" name={iconType} size={20} color="#666" />
       </View>
       <TextInput
         value={labelValue}
