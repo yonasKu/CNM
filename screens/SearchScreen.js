@@ -8,16 +8,19 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState,useContext} from 'react';
 import Feather from 'react-native-vector-icons/Feather';
 import {windowHeight} from '../utils/dimensions';
 
 import filter from 'lodash.filter';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {Icon} from '@rneui/themed';
+import {BuildingsDataContext} from '../BuildingsDataContext';
+
+import geohash from 'ngeohash';
 
 const API_ENDPOINT = `https://randomuser.me/api/?results=30`;
-const api =`https://v1.nocodeapi.com/yonasku/fbsdk/TAXCTHLcOolNMAyJ/firestore/allDocuments?collectionName=buildingCollection`
+const api = `https://v1.nocodeapi.com/yonasku/fbsdk/TAXCTHLcOolNMAyJ/firestore/allDocuments?collectionName=buildingCollection`;
 
 const SearchScreen = () => {
   const [isLoading, setIsloading] = useState('false');
@@ -26,28 +29,19 @@ const SearchScreen = () => {
   const [fullData, setFulldata] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const {buildingsData} = useContext(BuildingsDataContext);
+  const [buildingsDatas, setBuildingsDatas] = useState([]);
+
+  const decodedCoordinates = buildingsData.map(building => {
+    const {latitude, longitude} = geohash.decode(building.geoHash);
+    return {...building, coordinates: [longitude,latitude]};
+  });
+
+  console.log(decodedCoordinates);
   useEffect(() => {
-    setIsloading(true);
-    fetchData(API_ENDPOINT);
+    setBuildingsDatas(decodedCoordinates);
   }, []);
-
-  const fetchData = async url => {
-    try {
-      const response = await fetch(url);
-      const json = await response.json();
-      setData(json.results);
-
-      setFulldata(json.results);
-
-      console.log(json.results);
-      setIsloading(false);
-    } catch (error) {
-      setIsloading(false);
-      setError(error);
-      console.log(error);
-    }
-  };
-
+  //console.log(buildingsDatas);
   const handlesearch = query => {
     setSearchQuery(query);
     const formattedQuery = query.toLowerCase();
@@ -66,19 +60,10 @@ const SearchScreen = () => {
     return false;
   };
 
-  if (isLoading) {
+  if (!isLoading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
         <ActivityIndicator size={'large'} color="#5500dc" />
-      </View>
-    );
-  }
-  if (error) {
-    return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <Text>
-          Error in fetching data ... please check your internet connection!
-        </Text>
       </View>
     );
   }
@@ -89,7 +74,7 @@ const SearchScreen = () => {
         <View style={styles.searchContainer}>
           <View style={styles.searchWrapper}>
             <TextInput
-            style={styles.searchInput}
+              style={styles.searchInput}
               placeholder="Enter place you want to Search"
               autoCapitalize="none"
               autoCorrect={false}
@@ -98,28 +83,38 @@ const SearchScreen = () => {
             />
           </View>
           <View style={styles.searchBtn}>
-            <Icon type="MaterialIcons" name="search" size={28} color="#ffffff" />
+            <Icon
+              type="MaterialIcons"
+              name="search"
+              size={28}
+              color="#ffffff"
+            />
           </View>
         </View>
-        <FlatList
-          data={data}
-          keyExtractor={item => item.login.username}
-          renderItem={({item}) => (
-            <View style={styles.itemcontainer}>
-              <Image
-                source={{uri: item.picture.thumbnail}}
-                style={styles.image}
-              />
-              <TouchableOpacity>
-                <Text style={styles.textName}>
-                  {item.name.first}
-                  {item.name.last}
-                </Text>
-                <Text style={styles.textEmail}>{item.email}</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        />
+        <View style={{marginTop: 40}}>
+          <FlatList
+            data={decodedCoordinates}
+            keyExtractor={item => item.id}
+            renderItem={({item}) => (
+              <View style={styles.itemcontainer}>
+                <View>
+                  {item.url ? (
+                    <Image source={{uri: item.url}} style={styles.image} />
+                  ) : (
+                    <Image source={require('../assets/ASTU.png')} style={styles.image} />
+                  )}
+                </View>
+                <TouchableOpacity>
+                  <Text style={styles.textName}>
+                    {item.buildingCategory}
+                    {item.buildingName}
+                  </Text>
+                  <Text style={styles.textEmail}>{item.coordinates}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        </View>
       </View>
     </SafeAreaProvider>
   );
@@ -137,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
   },
-  
+
   itemcontainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -159,12 +154,14 @@ const styles = StyleSheet.create({
     color: 'grey',
   },
   searchContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
-    marginTop: 10,
+    flex: 1,
+    paddingTop: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginTop: 60,
     height: 40,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -175,13 +172,15 @@ const styles = StyleSheet.create({
   },
   searchWrapper: {
     flex: 1,
-    backgroundColor:'#f7f5eee8',
+    backgroundColor: '#ffffff',
     marginRight: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     width: '100%',
     height: windowHeight / 15,
     borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: '#1565C0',
   },
   inputContainer: {
     marginTop: 10,
@@ -196,22 +195,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   searchInput: {
-    fontFamily: "DMregular",
-    width: "100%",
-    height: "100%",
+    fontFamily: 'DMregular',
+    width: '100%',
+    height: '100%',
     paddingHorizontal: 10,
   },
   searchBtn: {
     width: 50,
-    height: "100%",
+    height: 50,
     backgroundColor: '#1565C0',
     borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchBtnImage: {
-    width: "50%",
-    height: "50%",
-    tintColor:'#F3F4F8',
-  }
+    width: '50%',
+    height: '50%',
+    tintColor: '#F3F4F8',
+  },
 });

@@ -6,14 +6,22 @@ import MapboxGL, {
   MarkerVieW,
   Images,
 } from '@rnmapbox/maps';
-
+import {BuildingsDataContext} from '../BuildingsDataContext';
 
 const MarkersCard = () => {
   const [markers, setMarkers] = useState([
     
   ]);
   const filteredMarkers = markers.filter(marker => marker.type === selectedType)
-  
+  const {buildingsData} = useContext(BuildingsDataContext);
+  const [buildingsDatas, setBuildingsDatas] = useState([]);
+
+  const decodedCoordinates = buildingsData.map(building => {
+    const {latitude, longitude} = geohash.decode(building.geoHash);
+    return {...building, latitude, longitude};
+  });
+
+  console.log(buildingsDatas);
   const featureCollection = {
     type: 'FeatureCollection',
     features: filteredMarkers.map(marker => ({

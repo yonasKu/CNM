@@ -7,50 +7,37 @@ import {
   Button,
   ActivityIndicator,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {Icon} from '@rneui/themed';
 import {windowHeight, windowWidth} from '../utils/dimensions';
 import {useNavigation} from '@react-navigation/native';
-import {fetchRoute} from '../utils/Routeutils';
-import Geolocation from 'react-native-geolocation-service';
+import {WINDOW_WIDTH} from '@gorhom/bottom-sheet';
 
-//<Icon name="event" type="MaterialIcons" color="#517fa4" />
+import {BuildingsDataContext} from '../BuildingsDataContext';
+import geohash from 'ngeohash';
+import { fetchRoute } from '../utils/Routeutils';
 
-const DetailsCard = ({name, description, place, coordinate, userLocation}) => {
-  const navigation = useNavigation();
-
+const DetailsCard = ({id, name, description, place, coordinates, block}) => {
   const [isLoading, setIsLoading] = useState(false);
-  const handleDetailsRoutePress = async coord => {
-    navigation.navigate('Details');
-  };
-
-  const handleRoutePress = async coord => {
-    setIsLoading(true)
+  const navigation = useNavigation();
+  const [userLocation, setUserLocation] = useState([
+    39.29067144628581, 8.562990740516645,
+  ]);
+console.log(userLocation,coordinates)
+  const handleRoutePress = async coordinates => {
+    console.log(userLocation,coordinates)
     if (userLocation.length === 0) {
       alert(
         'Could not fetch your location. Please turn your location on  or try again.',
       );
-      setIsLoading(false);
       return;
     }
-    try {
-      // Call fetchRoute with the origin and destination variables
-      const route = await fetchRoute(userLocation, coord);
-      navigation.navigate('Route', {route});
-      console.log(userLocation, coord);
-      //console.log(route);
-    } catch (error) {
-      console.error(error);
-      alert('An error occurred while fetching the route. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    // Call fetchRoute with the origin and destination variables
+    const route = await fetchRoute(userLocation, coordinates);
+    navigation.navigate('Route', {route});
+    console.log(userLocation, coordinates);
+    //console.log(route);
   };
-
-  //const [userLocation, setUserLocation] = useState([]);
-
-  console.log(userLocation);
-  //console.log(coordinate);
 
   return (
     <View>
@@ -89,7 +76,41 @@ const DetailsCard = ({name, description, place, coordinate, userLocation}) => {
                       color="black"
                       size={18}
                     />
-                    <Text style={{color: 'black', fontWeight: 400}}>place</Text>
+                    <Text style={{color: 'black', fontWeight: 400}}>
+                      {place}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      gap: 15,
+                      flexDirection: 'row',
+                      paddingTop: 5,
+                      paddingBottom: 5,
+                    }}>
+                    <Icon
+                      name="office-building-outline"
+                      type="material-community"
+                      color="black"
+                      size={18}
+                    />
+                    <Text style={{color: 'black', fontWeight: 400}}>
+                      B-{block}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      gap: 15,
+                      flexDirection: 'row',
+                    }}>
+                    <Icon
+                      name="door"
+                      type="material-community"
+                      color="black"
+                      size={18}
+                    />
+                    <Text style={{color: 'black', fontWeight: 400}}>
+                      offices
+                    </Text>
                   </View>
                   <View
                     style={{
@@ -108,7 +129,7 @@ const DetailsCard = ({name, description, place, coordinate, userLocation}) => {
                   <View
                     style={{
                       flexDirection: 'row',
-                      justifyContent: 'space-around',
+                      justifyContent: 'center',
                       alignItems: 'center',
                       //justifyContent: 'center',
                     }}>
@@ -117,29 +138,11 @@ const DetailsCard = ({name, description, place, coordinate, userLocation}) => {
                         backgroundColor: 'white',
                         borderRadius: 15,
                         padding: 4,
-                        flexDirection: 'row-reverse',
-                        alignItems: 'center',
-                      }}
-                      onPress={handleDetailsRoutePress}>
-                      <Text style={styles.ButtonsText}>Details to</Text>
-                      <View style={{transform: [{rotate: '180deg'}]}}>
-                        <Icon
-                          name="double-arrow"
-                          type="MaterialIcons"
-                          color="silver"
-                          size={20}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: 'white',
-                        borderRadius: 15,
-                        padding: 4,
                         flexDirection: 'row',
                       }}
                       onPress={() => {
-                        handleRoutePress(coordinate);
+                        handleRoutePress(coordinates)
+                        console.log(coordinates);
                       }}>
                       <Text style={styles.ButtonsText}>Travel to</Text>
                       <Icon
@@ -150,8 +153,8 @@ const DetailsCard = ({name, description, place, coordinate, userLocation}) => {
                       />
                     </TouchableOpacity>
                   </View>
-                  {isLoading && <ActivityIndicator />}
                 </View>
+                {isLoading && <ActivityIndicator />}
               </View>
             </View>
           </View>
@@ -188,8 +191,8 @@ const styles = StyleSheet.create({
     //borderBottomWidth: 1,
   },
   image: {
-    width: windowWidth / 3.5,
-    height: windowHeight / 3.5,
+    width: windowWidth / 4,
+    height: windowHeight / 3,
     resizeMode: 'contain',
     //borderBottomLeftRadius: 10,
     //borderBottomRightRadius: 10,
@@ -199,6 +202,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     justifyContent: 'center',
     alignItems: 'center',
+    maxWidth: WINDOW_WIDTH / 3.5,
   },
   ContentContainer: {
     flex: 1,

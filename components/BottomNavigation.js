@@ -4,10 +4,10 @@ import {Icon} from '@rneui/themed';
 
 
 
-const BottomNavigation = ({handlepoints}) => {
+const BottomNavigation = ({handlepoints,handlepointers}) => {
 
-  Dtypes = ['Where to eat', 'Dormitories', 'Wifi','Shops','Departments','Library']
-  
+  Dtypes = ['Where to eat', 'Dormitories', 'Wifi','Shops','Departments','Library','Laboratory',]
+  Dtype = ['Hospital','Area','Public Toilet','Cafeteria', 'Classroom','Dormitory','Laboratory','Library','Lounge','Meeting Hall','Office','Others']
   return (
     <View style={{position: 'absolute', bottom: '1%'}}>
             <ScrollView
@@ -90,6 +90,48 @@ const BottomNavigation = ({handlepoints}) => {
                     />
                   </View>
                   <Text style={styles.containertext}>Libraries</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                onPress={()=>handlepoints(Dtypes[5])}
+                style={styles.tabViews}>
+                  <View style={[styles.tabIcon, {backgroundColor: 'blue'}]}>
+                    <Icon
+                      name="test-tube"
+                      type="material-community"
+                      color="white"
+                      size={13}
+                    />
+                  </View>
+                  <Text style={styles.containertext}>Laboratory</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                onPress={()=>handlepointers(Dtype[2])}
+                style={styles.tabViews}>
+                  <View style={[styles.tabIcon, {backgroundColor: 'black'}]}>
+                    <Icon
+                      name="family-restroom"
+                      type="material"
+                      color="white"
+                      size={13}
+                    />
+                  </View>
+                  <Text style={styles.containertext}>Public Restrooms</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                onPress={()=>handlepointers(Dtype[0])}
+                style={styles.tabViews}>
+                  <View style={[styles.tabIcon, {backgroundColor: 'indigo'}]}>
+                    <Icon
+                      name="dots-horizontal"
+                      type="material-community"
+                      color="white"
+                      size={13}
+                    />
+                  </View>
+                  <Text style={styles.containertext}>Others</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>

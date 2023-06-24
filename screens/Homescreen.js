@@ -19,16 +19,65 @@ import {
 } from '@rneui/themed';
 import Navoptions from '../components/NavOptions';
 import {windowWidth} from '../utils/dimensions';
-import { PermissionsAndroid } from 'react-native';
+import {PermissionsAndroid} from 'react-native';
+import {WINDOW_HEIGHT} from '@gorhom/bottom-sheet';
+import IndoorCard from '../components/IndoorCard';
+import Optionscard from '../components/Optionscard';
+import geohash from 'ngeohash';
+import {app, firebase} from '../config';
+import {
+  collection,
+  doc,
+  getFirestore,
+  onSnapshot,
+  orderBy,
+  query,
+} from 'firebase/firestore';
 
 const Homescreen = ({navigation}) => {
   //const navigation =useNavigation();
 
+  const geoHash = 'scebwp4gknb1';
+  const {latitude, longitude} = geohash.decode(geoHash);
+  console.log(latitude, longitude);
+
+  // const [buildingsData, setBuildingsData] = useState([]);
+  // const db = getFirestore(app);
+  // useEffect(() => {
+  //   // Real-time data gathering
+  //   const colRef = collection(
+  //     db,
+  //     'Locations',
+  //     'Adama Science And Technology',
+  //     'BuildingsData',
+  //   );
+  //   const queuedRef = query(colRef, orderBy('buildingNumber'));
+  //   const unsubscribe = onSnapshot(queuedRef, snapshot => {
+  //     let data = [];
+  //     snapshot.docs.forEach(doc => {
+  //       data.push({...doc.data(), id: doc.id});
+  //     });
+  //     setBuildingsData(data);
+  //   });
+
+  //   return () => unsubscribe();
+  // }, []);
+  
+  // /////////////////////
+  // const geoHashes = buildingsData.map(building => building.geoHash);
+
+  // console.log(geoHashes);
+
+  // const decodedCoordinates = buildingsData.map(building => {
+  //   const {latitude, longitude} = geohash.decode(building.geoHash);
+  //   return {...building, latitude, longitude};
+  // });
+
+  // //console.log(decodedCoordinates);
   const {user, Logout} = useContext(AuthContext);
 
-  const bottomSheetRef = useRef(null);
-  const [isOpen, setIsOpen] = useState(true);
- 
+  const [isOpen, setIsOpen] = useState(false);
+
   useEffect(() => {
     checkPermissions();
   }, []);
@@ -84,26 +133,23 @@ const Homescreen = ({navigation}) => {
 
       <View style={styles.container}>
         <ScrollView style={{paddingVertical: 10}}>
-          <Navoptions />
-          <Text style={styles.subHeader}>Indoor Nav</Text>
-          <View style={{paddingTop: 20, paddingBottom: 10}}>
+          <View style={{paddingTop: 0, paddingBottom: 10}}>
             <Tile
-              imageSrc={{
-                uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Half_Dome_from_Glacier_Point%2C_Yosemite_NP_-_Diliff.jpg/320px-Half_Dome_from_Glacier_Point%2C_Yosemite_NP_-_Diliff.jpg',
-              }}
-              title="This is Full Campus Navigation using images "
-              titleStyle={{fontSize: 20, textAlign: 'center', paddingBottom: 5}}
+              imageSrc={require('../assets/navigations.jpeg')}
               featured
               activeOpacity={1}
-              width={windowWidth - 15}></Tile>
+              width={windowWidth - 15}
+              height={WINDOW_HEIGHT / 4}></Tile>
           </View>
+          <Text style={styles.subHeader}>Navigation</Text>
+          <Navoptions />
           <View>
             <Card>
               <Card.Title>🔭 EXPLORE ASTU 🗺️ </Card.Title>
               <Card.Divider />
               <Card.Image style={{padding: 0}} source={images.profile[1]} />
               <Text style={{marginBottom: 10}}>
-                This is the webview of Indoor and Outdoor Navigation of Adama
+                This is the View of Indoor and Outdoor Navigation in Adama
                 Science And Technology University using virtual images
               </Text>
               <Button
@@ -124,7 +170,14 @@ const Homescreen = ({navigation}) => {
               />
             </Card>
           </View>
-          
+          <Text style={styles.subHeader}>Indoor Nav</Text>
+
+          <View style={{paddingTop: 20, paddingBottom: 10}}>
+            <IndoorCard />
+          </View>
+          <View style={styles.Optionscontainer}>
+            <Optionscard />
+          </View>
         </ScrollView>
       </View>
     </SafeAreaProvider>
@@ -140,6 +193,7 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     backgroundColor: 'white',
+
     padding: 10,
   },
   text: {

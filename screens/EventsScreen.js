@@ -213,7 +213,7 @@ const EventsScreen = () => {
                 <ListItem.Content>
                   <ListItem.Title>Event based Routes</ListItem.Title>
                   <ListItem.Subtitle>
-                    tap to see routes used in the campus
+                    Tap to see Events and their routes in the campus
                   </ListItem.Subtitle>
                 </ListItem.Content>
               }
@@ -223,6 +223,7 @@ const EventsScreen = () => {
                 setExpanded1(false);
               }}>
               {/* Display data from second data array */}
+              {isLoading && <ActivityIndicator />}
               {eventRoutesData.map(item => (
                 <View key={item.id}>
                   <EventsCard
@@ -235,7 +236,7 @@ const EventsScreen = () => {
                   />
                 </View>
               ))}
-              {isLoading && <ActivityIndicator />}
+
             </ListItem.Accordion>
             
           </View>

@@ -50,9 +50,9 @@ const RouteScreen = () => {
     MapboxGL.UserTrackingModes.FollowWithCourseAndHeading;
   //const [route, setRoute] = useState(null);
 
-
   const [isLoading, setIsLoading] = useState(true);
 
+  const [alertShown, setAlertShown] = useState(false);
 
   const bottomSheetRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -66,6 +66,7 @@ const RouteScreen = () => {
   const [location, setLocation] = useState([
     39.29067144628581, 8.562990740516645,
   ]);
+  const [distance, setDistance] = useState(null);
   const [userSelectedUserTrackingMode] = useState(
     MapboxGL.UserTrackingModes.Follow,
   );
@@ -81,28 +82,6 @@ const RouteScreen = () => {
     setIsOpen(true);
     bottomSheetRef.current?.snapToIndex(index);
   }, []);
-  ////////////////////////////////////////////////////////////
-  useMemo(async () => {
-    if (IS_ANDROID && isFetchingAndroidPermission) {
-      const isGranted = await MapboxGL.requestAndroidLocationPermissions();
-      setIsAndroidPermissionGranted(isGranted);
-      setIsFetchingAndroidPermission(false);
-    }
-  }, [isFetchingAndroidPermission]);
-  ///////////////////////////////////////////////////////////////////////
-
-  const Route = useRoute();
-  useEffect(() => {
-    if (Route && Route.params && Route.params.route) {
-      const route = Route.params.route;
-      //console.log(route);
-      setrouteGeoJSON(route);
-    }
-  }, []);
-
-  const [Userdestination, setUserdestination] = useState(null);
-  /////////////////////////////////////////////////////
-
   const [UserLocation, setUserLocation] = useState(null);
   useEffect(() => {
     getLiveLocation();
@@ -127,7 +106,6 @@ const RouteScreen = () => {
     return () => clearTimeout(timeout);
   }, []);
 
-  
   ///////////////////////////////////////////////////////////////////////
   useEffect(() => {
     if (UserLocation) {
@@ -136,30 +114,53 @@ const RouteScreen = () => {
   }, [UserLocation]);
   ///////////////////////////
 
-///////////////////////////////
+  ////////////////////////////////////////////////////////////
+  useMemo(async () => {
+    if (IS_ANDROID && isFetchingAndroidPermission) {
+      const isGranted = await MapboxGL.requestAndroidLocationPermissions();
+      setIsAndroidPermissionGranted(isGranted);
+      setIsFetchingAndroidPermission(false);
+    }
+  }, [isFetchingAndroidPermission]);
+  ///////////////////////////////////////////////////////////////////////
 
-const [timeElapsed, setTimeElapsed] = useState(0);
+  const Route = useRoute();
+  useEffect(() => {
+    if (Route && Route.params && Route.params.route) {
+      const route = Route.params.route;
+      //console.log(route);
+      setrouteGeoJSON(route);
+    }
+  }, []);
 
-useEffect(() => {
-  const intervalId = setInterval(() => {
-    setTimeElapsed(timeElapsed => timeElapsed + 1);
-  }, 1000);
+  const [Userdestination, setUserdestination] = useState(null);
+  /////////////////////////////////////////////////////
 
-  return () => clearInterval(intervalId);
-}, []);
+  ///////////////////////////////
 
-useEffect(() => {
-  if (UserLocation !== null) {
-    setIsLoading(false);
-  } else if (timeElapsed >= 45) {
-    setIsLoading(false);
-    alert('Could not fetch your location. Please turn your location on or try again.');
-  }
-}, [UserLocation, timeElapsed]);
+  const [timeElapsed, setTimeElapsed] = useState(0);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTimeElapsed(timeElapsed => timeElapsed + 1);
+    }, 1000);
 
+    return () => clearInterval(intervalId);
+  }, []);
 
-//////////////////////////////
+  useEffect(() => {
+    if (UserLocation !== null) {
+      setIsLoading(false);
+    } else if (timeElapsed >= 45 && !alertShown) {
+      setIsLoading(false);
+      setAlertShown(true);
+      alert(
+        'Could not fetch your location. Please turn your location on or try again.',
+      );
+    }
+  }, [UserLocation, timeElapsed]);
+
+  //////////////////////////////
 
   const [centerpinCoordinate, setCenterpinCoordinate] = useState([
     39.290794776187056, 8.562069822199803,
@@ -213,8 +214,7 @@ useEffect(() => {
         `https://api.mapbox.com/directions/v5/mapbox/walking/${UserLocation[0]},${UserLocation[1]};${centerCoordinate[0]},${centerCoordinate[1]}?` +
           new URLSearchParams({
             geometries: 'geojson',
-            access_token:
-              'pk.eyJ1IjoieW9uYXMxMyIsImEiOiJjbGZzZzZqd2YwNXRvM2VxcmdyMTc4MWg4In0.svu9-rLT7GOuHkrLA5Aejw',
+            access_token: MAP_BOX_ACCESS_TOKEN,
           }),
       );
       const data = await response.json();
@@ -229,6 +229,10 @@ useEffect(() => {
         ],
       };
       setrouteGeoJSON(lineStringGeoJSON);
+
+      // Extract the distance value from the response
+      const distanceInMeters = data?.routes[0]?.distance;
+      setDistance(distanceInMeters);
 
       const allCoordinates =
         lineStringGeoJSON?.features[0]?.geometry?.coordinates;
@@ -253,8 +257,7 @@ useEffect(() => {
         `https://api.mapbox.com/directions/v5/mapbox/walking/${UserLocation[0]},${UserLocation[1]};${coord[0]},${coord[1]}?` +
           new URLSearchParams({
             geometries: 'geojson',
-            access_token:
-              'pk.eyJ1IjoieW9uYXMxMyIsImEiOiJjbGZzZzZqd2YwNXRvM2VxcmdyMTc4MWg4In0.svu9-rLT7GOuHkrLA5Aejw',
+            access_token: MAP_BOX_ACCESS_TOKEN,
           }),
       );
       const data = await response.json();
@@ -270,6 +273,16 @@ useEffect(() => {
       };
       //console.log(lineStringGeoJSON);
       setrouteGeoJSON(lineStringGeoJSON);
+
+      // Extract the distance value from the response
+      const distanceInMeters = data?.routes[0]?.distance;
+      setDistance(distanceInMeters);
+
+      const allCoordinates =
+        lineStringGeoJSON?.features[0]?.geometry?.coordinates;
+      const featuresCenter = turf.points(allCoordinates);
+      const center = turf.center(featuresCenter);
+      setcenterOfLineString(center?.geometry?.coordinates);
     } catch (error) {
       console.error(error);
     }
@@ -283,11 +296,22 @@ useEffect(() => {
       setCenterpinCoordinate([39.290794776187056, 8.562069822199803]);
     }
   }, [UserLocation]);
+
+  const CustomCalloutView = ({message}) => {
+    return (
+      <View style={styles.callOutContainer}>
+        <View style={styles.callOutInner} />
+        <View style={[styles.triangle, styles.arrowDown]} />
+      </View>
+    );
+  };
   //////////////////////////////////
+
+   
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
-      {isLoading && <ActivityIndicator />}
+        {isLoading && <ActivityIndicator />}
         <MapboxGL.MapView
           style={styles.mapbox}
           styleURL={
@@ -339,6 +363,24 @@ useEffect(() => {
               />
             </MapboxGL.ShapeSource>
           )}
+          {centerOfLineString && (
+            <MapboxGL.PointAnnotation
+              id="centerOfLineString"
+              coordinate={centerOfLineString}
+              anchor={{x: 0.5, y: 0.5}}>
+              <View style={{backgroundColor: 'red', padding: 5}}>
+                <Text style={{color: 'white'}}>{`${distance} meters`}</Text>
+              </View>
+            </MapboxGL.PointAnnotation>
+          )}
+          {currentPinCoordinate && (
+            <MapboxGL.MarkerView
+              id="selectedFeatureMarkerView"
+              coordinate={currentPinCoordinate}
+              anchor={{x: 0.5, y: 0.5}}>
+              <CustomCalloutView />
+            </MapboxGL.MarkerView>
+          )}
         </MapboxGL.MapView>
         <TouchableOpacity
           style={styles.touchable}
@@ -369,12 +411,13 @@ useEffect(() => {
             <View style={styles.contentContainer}>
               <Text>Point on Map or Enter the place you want to go 🔍</Text>
               <RouteInput
-                placeholderText="user location"
+                placeholderText="User location"
                 iconType="map-pin"
                 autoCorrect={true}
+                editable={false}
               />
               <RouteInput
-                placeholderText="where to [39.287132492278175, 8.565264636212788]"
+                placeholderText="Where to ?"
                 iconType="flag-checkered"
                 autoCorrect={true}
                 labelValue={Userdestination}
@@ -485,6 +528,16 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
+  },
+  callOutContainer: {
+    backgroundColor: 'white',
+  },
+  callOutInner: {
+    backgroundColor: 'white',
+  },
+  calloutText: {
+    color: 'black',
+    fontSize: 16,
   },
 });
 

@@ -8,6 +8,9 @@ import {images} from '../components/Images';
 import {FlatList} from 'react-native-gesture-handler';
 import { Icon } from '@rneui/themed';
 import { useNavigation } from '@react-navigation/native';
+import { windowHeight, windowWidth } from '../utils/dimensions';
+
+
 
 const data = [
   {
@@ -34,6 +37,7 @@ const Navoptions = () => {
     <FlatList
       data={data}
       horizontal
+      showsHorizontalScrollIndicator={false}
       keyExtractor={(item) => item.id}
       renderItem={({item}) => (
         <TouchableOpacity 
@@ -62,8 +66,8 @@ export default Navoptions;
 
 const styles = StyleSheet.create({
   ImFlatlist: {
-    width: 60,
-    height: 60,
+    width: windowWidth/5.5,
+    height: windowHeight/12,
     resizeMode:'contain',
   },
   touchableFlat: {
@@ -74,8 +78,8 @@ const styles = StyleSheet.create({
     //backgroundColor:'#eaeaea',
     backgroundColor:'#f5f6fa',
     margin: 10 ,
-    width:120,
-    height:120,
+    width:windowWidth/3.5,
+    height:windowHeight/6,
     borderRadius:25,
   },  
   touchableview: {

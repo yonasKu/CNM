@@ -1,4 +1,10 @@
-import React, {useRef, useState, useEffect, useCallback} from 'react';
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useContext,
+} from 'react';
 import MapboxGL, {
   Camera,
   PointAnnotation,
@@ -28,6 +34,8 @@ import BottomSheet from '@gorhom/bottom-sheet';
 import DetailsCard from '../components/DetailsCard';
 import {getCurrentLocation} from '../utils/helperFunction';
 import {get} from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import {BuildingsDataContext} from '../BuildingsDataContext';
+import geohash from 'ngeohash';
 
 MapboxGL.setAccessToken(MAP_BOX_ACCESS_TOKEN);
 
@@ -63,6 +71,7 @@ MapboxGL.setAccessToken(MAP_BOX_ACCESS_TOKEN);
 // Call requestLocationPermission()
 
 const Mapscreen = () => {
+  const {buildingsData} = useContext(BuildingsDataContext);
   const mapViewRef = useRef(null);
   const cameraRef = useRef(null);
   const pointAnnotation = useRef(null);
@@ -72,13 +81,12 @@ const Mapscreen = () => {
     centerCoordinate: [39.29067144628581, 8.562990740516645],
     //pitch: 0,
     //heading: 0,
-    zoomLevel: 14,
+    zoomLevel: 15,
   };
   const [zoomLevel, setZoomLevel] = useState(defaultCamera.zoomLevel);
   const [location, setLocation] = useState(false);
 
   // function to check permissions and get Location
-  const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
     checkPermissions();
@@ -106,13 +114,15 @@ const Mapscreen = () => {
     }
   };
 
+  const [userLocation, setUserLocation] = useState(null);
+
   const getCurrentLocation = async () => {
     try {
       const location = await new Promise((resolve, reject) => {
         Geolocation.getCurrentPosition(
           position => resolve(position),
           error => reject(error),
-          { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
+          {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000},
         );
       });
       console.log('Latitude:', location.coords.latitude);
@@ -124,18 +134,18 @@ const Mapscreen = () => {
       //alert('Error obtaining current location:', error);
     }
   };
-  
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       getCurrentLocation();
       setTimeout(getCurrentLocation, 9000);
     }, 9000);
-  
+
     return () => clearTimeout(timeout);
   }, []);
-  
+
   //console.log('UserLocation:', userLocation);
-  
+
   /////////////////////////////////////////////////
 
   const changeStyle = () => {
@@ -167,10 +177,27 @@ const Mapscreen = () => {
   const [Marker, setMarker] = useState(DataMarkers);
 
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [selectedMarkers, setSelectedMarkers] = useState(null);
+
   const [showIcons, setShowIcons] = useState(false);
+  const [showIconpins, setShowIconpins] = useState(false);
   //types = ['Where to eat', 'Dormitories', 'Wifi','Libraries']
 
   const [selectedType, setSelectedType] = useState('null');
+  ///////////
+  const [selectedTypes, setSelectedTypes] = useState('null');
+
+  const [buildingsDatas, setBuildingsDatas] = useState([]);
+
+  const decodedCoordinates = buildingsData.map(building => {
+    const {latitude, longitude} = geohash.decode(building.geoHash);
+    return {...building, coordinates: [longitude, latitude]};
+  });
+
+  useEffect(() => {
+    setBuildingsDatas(decodedCoordinates);
+  }, []);
+  console.log(buildingsDatas);
 
   const filteredMarkers = Marker.filter(marker => marker.type === selectedType);
 
@@ -190,6 +217,26 @@ const Mapscreen = () => {
       },
     })),
   };
+  const filteredMarkerss = buildingsDatas.filter(
+    buildingsDatas => buildingsDatas.buildingCategory === selectedTypes,
+  );
+  console.log(buildingsDatas.buildingCategory);
+  const featureCollections = {
+    type: 'FeatureCollection',
+    features: filteredMarkerss.map(buildingsDatas => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: buildingsDatas.coordinates,
+      },
+      properties: {
+        title: buildingsDatas.buildingName,
+        description: buildingsDatas.buildingDescription,
+        id: buildingsDatas.id,
+        coordinate: buildingsDatas.coordinates,
+      },
+    })),
+  };
 
   const symbolLayerStyle = {
     iconAllowOverlap: true,
@@ -203,9 +250,16 @@ const Mapscreen = () => {
   const handlepoints = types => {
     setSelectedType(types), setShowIcons(true);
   };
+  const handlepointers = types => {
+    setSelectedTypes(types), setShowIconpins(!showIconpins);
+  };
   const handleMarkerPress = event => {
     const {properties} = event.features[0];
     setSelectedMarker(properties);
+  };
+  const handleMarkersPress = event => {
+    const {properties} = event.features[0];
+    setSelectedMarkers(properties);
   };
   //////////////////////////////////////////////////////////////////////////
 
@@ -230,13 +284,22 @@ const Mapscreen = () => {
     setSelectedPin(feature.properties);
     handleSnapPress(1);
   };
+  const handlePinsPress = event => {
+    const feature = event.features[0];
+    setSelectedPin(feature.properties);
+    handleSnapPress(1);
+  };
   //console.log(selectedPin);
   //,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+  console.log(filteredMarkers);
   ///////////////////////////////////////////////////////////////////////////////////////////////////////
   return (
     <SafeAreaProvider>
       <View style={styles.page}>
         <View style={styles.container}>
+          <TouchableOpacity style={styles.layerIcon} onPress={changeStyle}>
+            <Entypo name="layers" size={24} color="white" />
+          </TouchableOpacity>
           <MapboxGL.MapView
             ref={mapViewRef}
             onRegionChangeComplete={handleRegionChange}
@@ -271,7 +334,16 @@ const Mapscreen = () => {
                   style={symbolLayerStyle}></MapboxGL.SymbolLayer>
               </MapboxGL.ShapeSource>
             )}
-
+            {showIconpins && (
+              <MapboxGL.ShapeSource
+                id="mapPinsSources"
+                shape={featureCollections}
+                onPress={handlePinsPress}>
+                <MapboxGL.SymbolLayer
+                  id="mapPinsLayers"
+                  style={symbolLayerStyle}></MapboxGL.SymbolLayer>
+              </MapboxGL.ShapeSource>
+            )}
             {/*
             {filteredMarkers.map(marker => (
               <MapboxGL.PointAnnotation
@@ -310,6 +382,12 @@ const Mapscreen = () => {
             </MapboxGL.PointAnnotation>
             <MapboxGL.UserLocation />
           </MapboxGL.MapView>
+          {/* .............,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,*/}
+          <BottomNavigation
+            handlepoints={handlepoints}
+            handlepointers={handlepointers}
+          />
+          {/* .............,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,*/}
           <View style={styles.touchableZoom}>
             <TouchableOpacity onPress={increaseZoom}>
               <Entypo name="plus" color="black" size={20} />
@@ -319,12 +397,7 @@ const Mapscreen = () => {
               <Entypo name="minus" color="black" size={20} />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.layerIcon} onPress={changeStyle}>
-            <Entypo name="layers" size={24} color="white" />
-          </TouchableOpacity>
-          {/* .............,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,*/}
-          <BottomNavigation handlepoints={handlepoints} />
-          {/* .............,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,*/}
+
           <BottomSheet
             ref={bottomSheetRef}
             snapPoints={snapPoints}

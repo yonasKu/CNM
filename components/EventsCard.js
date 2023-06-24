@@ -142,8 +142,8 @@ const styles = StyleSheet.create({
     //borderBottomWidth: 1,
   },
   image: {
-    width: windowWidth - 250,
-    height: windowHeight / 5,
+    width: windowWidth/3.5,
+    height: windowHeight /3.5,
     resizeMode: 'contain',
     //borderBottomLeftRadius: 10,
     //borderBottomRightRadius: 10,
